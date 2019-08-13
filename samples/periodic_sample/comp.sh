@@ -8,7 +8,7 @@ g++ -fpermissive  \
 ../../source/equations.cpp \
 ../../source/values.cpp \
 ../../source/periodic_metrics.cpp \
-../../source/report_memory.cpp periodic_sample.1.cpp \
+../../source/report_memory.cpp periodic_sample.cpp \
     -I. -I ../../source/ \
         -I ../../metrics-discovery/inc/common/instrumentation/api \
         -I ../../metrics-discovery/instrumentation/metrics_discovery/common/inc \

@@ -30,38 +30,21 @@ SOFTWARE.
 #include <stdio.h>
 #include <ostream>
 #include <iostream>
+#include <sys/time.h>
 namespace {
-
-  void PrintValue( std::ostream& os, const MetricsDiscovery::TTypedValue_1_0& value )
-  {
-    switch( value.ValueType )
-      {
-      case MetricsDiscovery::VALUE_TYPE_UINT64:
-        os << value.ValueUInt64 << ",";
-        break;
-
-      case MetricsDiscovery::VALUE_TYPE_FLOAT:
-        os << value.ValueFloat << ",";
-        break;
-
-      case MetricsDiscovery::VALUE_TYPE_BOOL:
-        os << (value.ValueBool ? "TRUE" : "FALSE") << ",";
-        break;
-
-      case MetricsDiscovery::VALUE_TYPE_UINT32:
-        os << value.ValueUInt32 << ",";
-        break;
-
-      default:
-        printf("false");
-      }
-  }
 
 void usage()
 {
     fprintf(stderr, "usage: periodic_sample.exe concurrentGroupName metricSetName metricName\n");
 }
 
+  // returns time in microseconds
+  uint64_t timer(void)
+  {
+    timeval i;
+    gettimeofday( &i, NULL );
+    return i.tv_sec * 1000000 + i.tv_usec;
+  }
 }
 
 int main(
@@ -168,31 +151,31 @@ int main(
 	//        long t0 = {};
 	//        QueryPerformanceFrequency(&freq);
 	//        QueryPerformanceCounter(&t0);
-        for (int j=0; j<1000000;j++) {
-            printf(".");
-
+	//        for (int j=0; j<1000000;j++) {
+	uint64_t t0 = timer();
+	for (;;) {
+	    printf(".");
             auto readCount = MDH_CopyDriverBufferedPeriodicReports(mdConcurrentGroup, &mdhReportMemory, reportReadIndex, reportWriteIndex);
             reportWriteIndex += readCount;
 
             for (uint32_t i = 0; i < readCount; ++i) {
                 printf("+");
             }
-
+	    uint64_t t = timer();
 	    //            long t = {};
 	    //            QueryPerformanceCounter(&t);
 	    //            auto timeMs = 1000.f * (t.QuadPart - t0.QuadPart) / freq.QuadPart;
-	    float timeMs = 5000.f;
+	    double timeMs = (t-t0) / 1000.f;
             if (reportWriteIndex >= numReportsToAllocate) {
                 printf("\nAllocated report memory is full!\n");
                 break;
             }
-
-            if (timeMs >= 5000.f) {
-	      //                printf("\n5 second capture complete!\n");
-		//                break;
+            if (timeMs >= 5000) {
+	      printf("\n5 second capture complete!\n");
+	      break;
             }
 
-	    usleep(1000000);
+	    usleep(100000);
         }
 
         // Disable the periodic sample collection.
