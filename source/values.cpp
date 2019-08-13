@@ -24,6 +24,7 @@ SOFTWARE.
 #include "metrics_discovery_helper.h"
 #include <assert.h>
 #include <algorithm>
+#include <cstring>
 
 uint32_t MDH_U32(MetricsDiscovery::TTypedValue_1_0 const& value)
 {
@@ -132,7 +133,7 @@ void MDH_MaximumValue::Initialize(
 
     if (constant) {
         Type = CONSTANT_MAX_VALUE;
-        MaxValue = MDH_CalculateMaxValue(mdDevice, mdMetricSet, mdMetric, nullptr);
+	//        MaxValue = MDH_CalculateMaxValue(mdDevice, mdMetricSet, mdMetric, nullptr);
         return;
     }
 
@@ -163,7 +164,7 @@ void MDH_MaximumValue::Update(
         break;
 
     case DYNAMIC_MAX_VALUE:
-        MaxValue = MDH_CalculateMaxValue(mdDevice, mdMetricSet, MDMetric, reportValues);
+      //        MaxValue = MDH_CalculateMaxValue(mdDevice, mdMetricSet, MDMetric, reportValues);
         break;
     }
 }

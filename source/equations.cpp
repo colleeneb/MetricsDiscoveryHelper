@@ -27,8 +27,8 @@ SOFTWARE.
 #include <float.h>
 
 void MDH_ExecuteEquations(
-    MetricsDiscovery::IMetricsDevice_1_0* mdDevice,
-    MetricsDiscovery::IMetricSet_1_0*     mdMetricSet,
+    MetricsDiscovery::IMetricsDevice_1_1* mdDevice,
+    MetricsDiscovery::IMetricSet_1_1*     mdMetricSet,
     void*                                 prevReportMemory,
     void*                                 reportMemory,
     MetricsDiscovery::TTypedValue_1_0*    reportValues,

@@ -1,0 +1,1 @@
+g++ -fpermissive list_metrics.cpp ../../source/context.cpp ../../source/periodic_metrics.cpp ../../source/report_memory.cpp ../../source/values.cpp  -I. -I ../../source/ -I /usr/local/include/mdapi/ -L /usr/local/lib/ -lOpenCL  -ldl

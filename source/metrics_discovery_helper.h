@@ -24,7 +24,7 @@ SOFTWARE.
 #define METRICS_DISCOVERY_HELPER_H
 
 #include <stdint.h>
-#include <windows.h>
+//#include <windows.h>
 #include "metrics_discovery_api.h"
 
 #pragma comment(lib, "setupapi.lib")

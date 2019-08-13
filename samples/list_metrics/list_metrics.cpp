@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include <metrics_discovery/metrics_discovery_helper.h>
+#include <metrics_discovery_helper.h>
 #include <stdint.h>
 #include <stdio.h>
 

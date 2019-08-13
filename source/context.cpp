@@ -25,80 +25,87 @@ SOFTWARE.
 #include <map>
 #include <string>
 #include <vector>
-
+#include <dlfcn.h>
+#include <cstring>
 #define INITGUID
-#include <devpkey.h>
-#include <initguid.h>
-#include <ntddvdeo.h>
-#include <shlwapi.h>
-#include <setupapi.h>
+//#include <devpkey.h>
+//#include <initguid.h>
+//#include <ntddvdeo.h>
+//#include <shlwapi.h>
+//#include <setupapi.h>
 
 namespace {
 
 void* OpenDllHandle()
 {
-#ifdef _WIN64
-    wchar_t const* dllFilename = L"igdmd64.dll";
-#else
-    wchar_t const* dllFilename = L"igdmd32.dll";
-#endif
 
-    // First, try to load dll from the path
-    static_assert(sizeof(void*) >= sizeof(HMODULE), "Can't store HMODULE into void*");
-    auto handle = (void*) LoadLibraryW(dllFilename);
-    if (handle != nullptr) {
-        return handle;
-    }
+  auto handle = (void*) dlopen("/usr/local/lib/libmd.so",RTLD_LAZY | RTLD_LOCAL);
 
-    // If that failed, try to load it from the DriverStore
-    GUID guid = GUID_DISPLAY_DEVICE_ARRIVAL;
-    auto devices = SetupDiGetClassDevs(&guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
-    if (devices == INVALID_HANDLE_VALUE) {
-        return nullptr;
-    }
+// #ifdef _WIN64
+//     wchar_t const* dllFilename = L"igdmd64.dll";
+// #else
+//     wchar_t const* dllFilename = L"igdmd32.dll";
+// #endif
 
-    for (uint32_t deviceIndex = 0; ; ++deviceIndex) {
-        SP_DEVINFO_DATA devInfo = {};
-        devInfo.cbSize = sizeof(SP_DEVINFO_DATA);
-        if (!SetupDiEnumDeviceInfo(devices, deviceIndex, &devInfo)) {
-            break;
-        }
+//     // First, try to load dll from the path
+//     static_assert(sizeof(void*) >= sizeof(HMODULE), "Can't store HMODULE into void*");
+//     auto handle = (void*) LoadLibraryW(dllFilename);
+//     if (handle != nullptr) {
+//         return handle;
+//     }
 
-        DWORD propertyType = 0;
-        wchar_t hardwareIds[MAX_PATH] = {};
-        if (!SetupDiGetDevicePropertyW(devices, &devInfo, &DEVPKEY_Device_HardwareIds,
-                &propertyType, (PBYTE) hardwareIds, sizeof(hardwareIds), nullptr, 0)) {
-            break;
-        }
+//     // If that failed, try to load it from the DriverStore
+//     GUID guid = GUID_DISPLAY_DEVICE_ARRIVAL;
+//     auto devices = SetupDiGetClassDevs(&guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+//     if (devices == INVALID_HANDLE_VALUE) {
+//         return nullptr;
+//     }
 
-        if (wcsncmp(hardwareIds, L"PCI\\VEN_8086&DEV_", 17) != 0) {
-            continue;
-        }
+//     for (uint32_t deviceIndex = 0; ; ++deviceIndex) {
+//         SP_DEVINFO_DATA devInfo = {};
+//         devInfo.cbSize = sizeof(SP_DEVINFO_DATA);
+//         if (!SetupDiEnumDeviceInfo(devices, deviceIndex, &devInfo)) {
+//             break;
+//         }
 
-        wchar_t path[MAX_PATH] = {};
-        if (!SetupDiGetDevicePropertyW(devices, &devInfo, &DEVPKEY_Device_DriverInfPath,
-                &propertyType, (PBYTE) path, sizeof(path), nullptr, 0) ||
-            !SetupGetInfDriverStoreLocationW(path, nullptr, nullptr, path, MAX_PATH, nullptr)) {
-            break;
-        }
-        PathRemoveFileSpecW(path);
-        if (!PathAppendW(path, dllFilename)) {
-            break;
-        }
+//         DWORD propertyType = 0;
+//         wchar_t hardwareIds[MAX_PATH] = {};
+//         if (!SetupDiGetDevicePropertyW(devices, &devInfo, &DEVPKEY_Device_HardwareIds,
+//                 &propertyType, (PBYTE) hardwareIds, sizeof(hardwareIds), nullptr, 0)) {
+//             break;
+//         }
 
-        handle = (void*) LoadLibraryW(path);
-        break;
-    }
+//         if (wcsncmp(hardwareIds, L"PCI\\VEN_8086&DEV_", 17) != 0) {
+//             continue;
+//         }
 
-    SetupDiDestroyDeviceInfoList(devices);
-    return handle;
+//         wchar_t path[MAX_PATH] = {};
+//         if (!SetupDiGetDevicePropertyW(devices, &devInfo, &DEVPKEY_Device_DriverInfPath,
+//                 &propertyType, (PBYTE) path, sizeof(path), nullptr, 0) ||
+//             !SetupGetInfDriverStoreLocationW(path, nullptr, nullptr, path, MAX_PATH, nullptr)) {
+//             break;
+//         }
+//         PathRemoveFileSpecW(path);
+//         if (!PathAppendW(path, dllFilename)) {
+//             break;
+//         }
+
+//         handle = (void*) LoadLibraryW(path);
+//         break;
+//     }
+
+//     SetupDiDestroyDeviceInfoList(devices);
+     return handle;
+
+
 }
 
 void CloseDllHandle(
     void* dllHandle)
 {
-    assert(dllHandle != nullptr);
-    FreeLibrary((HMODULE) dllHandle);
+  //    assert(dllHandle != nullptr);
+  //FreeLibrary((HMODULE) dllHandle);
+return;
 }
 
 void* GetDllFnPtr(
@@ -106,7 +113,8 @@ void* GetDllFnPtr(
     char const* functionName)
 {
     assert(dllHandle != nullptr);
-    return GetProcAddress((HMODULE) dllHandle, functionName);
+return dlsym( dllHandle, functionName);
+      //    return GetProcAddress((HMODULE) dllHandle, functionName);
 }
 
 }

@@ -22,13 +22,40 @@ SOFTWARE.
 
 #define NOMINMAX
 
-#include <metrics_discovery/metrics_discovery_helper.h>
-
+#include <metrics_discovery_helper.h>
+#include <vector>
+#include <unistd.h>
 #include <algorithm>
 #include <stdint.h>
 #include <stdio.h>
-
+#include <ostream>
+#include <iostream>
 namespace {
+
+  void PrintValue( std::ostream& os, const MetricsDiscovery::TTypedValue_1_0& value )
+  {
+    switch( value.ValueType )
+      {
+      case MetricsDiscovery::VALUE_TYPE_UINT64:
+        os << value.ValueUInt64 << ",";
+        break;
+
+      case MetricsDiscovery::VALUE_TYPE_FLOAT:
+        os << value.ValueFloat << ",";
+        break;
+
+      case MetricsDiscovery::VALUE_TYPE_BOOL:
+        os << (value.ValueBool ? "TRUE" : "FALSE") << ",";
+        break;
+
+      case MetricsDiscovery::VALUE_TYPE_UINT32:
+        os << value.ValueUInt32 << ",";
+        break;
+
+      default:
+        printf("false");
+      }
+  }
 
 void usage()
 {
@@ -137,11 +164,11 @@ int main(
         // getting collected (especially common if the Intel GPU is not the
         // primary adapter).
 
-        LARGE_INTEGER freq = {};
-        LARGE_INTEGER t0 = {};
-        QueryPerformanceFrequency(&freq);
-        QueryPerformanceCounter(&t0);
-        for (;;) {
+	//        long freq = {};
+	//        long t0 = {};
+	//        QueryPerformanceFrequency(&freq);
+	//        QueryPerformanceCounter(&t0);
+        for (int j=0; j<1000000;j++) {
             printf(".");
 
             auto readCount = MDH_CopyDriverBufferedPeriodicReports(mdConcurrentGroup, &mdhReportMemory, reportReadIndex, reportWriteIndex);
@@ -151,21 +178,21 @@ int main(
                 printf("+");
             }
 
-            LARGE_INTEGER t = {};
-            QueryPerformanceCounter(&t);
-            auto timeMs = 1000.f * (t.QuadPart - t0.QuadPart) / freq.QuadPart;
-
+	    //            long t = {};
+	    //            QueryPerformanceCounter(&t);
+	    //            auto timeMs = 1000.f * (t.QuadPart - t0.QuadPart) / freq.QuadPart;
+	    float timeMs = 5000.f;
             if (reportWriteIndex >= numReportsToAllocate) {
                 printf("\nAllocated report memory is full!\n");
                 break;
             }
 
             if (timeMs >= 5000.f) {
-                printf("\n5 second capture complete!\n");
-                break;
+	      //                printf("\n5 second capture complete!\n");
+		//                break;
             }
 
-            Sleep(100);
+	    usleep(1000000);
         }
 
         // Disable the periodic sample collection.
@@ -189,18 +216,54 @@ int main(
             auto reportData = mdhReportMemory.GetReportData(reportIdx);
 
             if (prevReportData != nullptr) {
-                MDH_ExecuteEquations(mdhContext.MDDevice, mdMetricSet, prevReportData, reportData,
-                    reportValues, MDH_EQUATION_READ_PERIODIC | MDH_EQUATION_NORMALIZE);
+                // MDH_ExecuteEquations(mdhContext.MDDevice, mdMetricSet, prevReportData, reportData,
+                //     reportValues, MDH_EQUATION_READ_PERIODIC | MDH_EQUATION_NORMALIZE);
 
-                auto timestamp = *(uint64_t*) (reportData + 4);
-                printf("    %016llx ", timestamp);
+	      const uint32_t reportSize       = mdMetricSet->GetParams()->QueryReportSize;
+	      printf( "%d\n", reportSize);
+	      const uint32_t metricsCount     = mdMetricSet->GetParams()->MetricsCount;
+	      const uint32_t informationCount = mdMetricSet->GetParams()->InformationCount;
+	      std::vector<MetricsDiscovery::TTypedValue_1_0> results;
+	      std::vector<MetricsDiscovery::TTypedValue_1_0> maxValues;
+	      results.resize( metricsCount + informationCount );
+	      int res = -1;
 
-                auto value = &reportValues[metricIndex];
-                switch (value->ValueType) {
-                case MetricsDiscovery::VALUE_TYPE_UINT32: printf("%u",   value->ValueUInt32); break;
-                case MetricsDiscovery::VALUE_TYPE_UINT64: printf("%llu", value->ValueUInt64); break;
-                case MetricsDiscovery::VALUE_TYPE_FLOAT:  printf("%f",   value->ValueFloat);  break;
-                }
+	      //	      TCompletionCode res = MetricsDiscovery::CC_ERROR_GENERAL;
+	      // if( m_IncludeMaxValues )
+	      // 	{
+	      	  uint32_t    outReportCount = 0;
+	      	  maxValues.resize( metricsCount );
+	      	  res = ((MetricsDiscovery::IMetricSet_1_1*)mdMetricSet)->CalculateMetrics(
+	      					      (const unsigned char*)prevReportData,
+	      					      reportSize,
+	      					      results.data(),
+	      					      (uint32_t)(results.size() * sizeof(MetricsDiscovery::TTypedValue_1_0)),
+	      					      &outReportCount,
+	      					      false );
+
+
+		  uint32_t metricsCount2 = mdMetricSet->GetParams()->MetricsCount;
+		  for( uint32_t i = 0; i < metricsCount2; i++ )
+		    {
+		      PrintValue( std::cout, results[ i ] );
+		      //		      if( m_IncludeMaxValues )
+			{
+			  PrintValue( std::cout, maxValues[ i ] );
+			}
+		    }
+
+		  //		  os << ",";
+
+		  for( uint32_t i = 0; i < mdMetricSet->GetParams()->InformationCount; i++ )
+		    {
+		      PrintValue( std::cout, results[ metricsCount + i ] );
+		    }
+
+	      // 	}
+	      // else
+	      // 	{
+	      // 	}
+
 
                 printf("\n");
             }
