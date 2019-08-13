@@ -216,54 +216,18 @@ int main(
             auto reportData = mdhReportMemory.GetReportData(reportIdx);
 
             if (prevReportData != nullptr) {
-                // MDH_ExecuteEquations(mdhContext.MDDevice, mdMetricSet, prevReportData, reportData,
-                //     reportValues, MDH_EQUATION_READ_PERIODIC | MDH_EQUATION_NORMALIZE);
+                MDH_ExecuteEquations(mdhContext.MDDevice, mdMetricSet, prevReportData, reportData,
+                    reportValues, MDH_EQUATION_READ_PERIODIC | MDH_EQUATION_NORMALIZE);
 
-	      const uint32_t reportSize       = mdMetricSet->GetParams()->QueryReportSize;
-	      printf( "%d\n", reportSize);
-	      const uint32_t metricsCount     = mdMetricSet->GetParams()->MetricsCount;
-	      const uint32_t informationCount = mdMetricSet->GetParams()->InformationCount;
-	      std::vector<MetricsDiscovery::TTypedValue_1_0> results;
-	      std::vector<MetricsDiscovery::TTypedValue_1_0> maxValues;
-	      results.resize( metricsCount + informationCount );
-	      int res = -1;
+                auto timestamp = *(uint64_t*) (reportData + 4);
+                printf("    %016llx ", timestamp);
 
-	      //	      TCompletionCode res = MetricsDiscovery::CC_ERROR_GENERAL;
-	      // if( m_IncludeMaxValues )
-	      // 	{
-	      	  uint32_t    outReportCount = 0;
-	      	  maxValues.resize( metricsCount );
-	      	  res = ((MetricsDiscovery::IMetricSet_1_1*)mdMetricSet)->CalculateMetrics(
-	      					      (const unsigned char*)prevReportData,
-	      					      reportSize,
-	      					      results.data(),
-	      					      (uint32_t)(results.size() * sizeof(MetricsDiscovery::TTypedValue_1_0)),
-	      					      &outReportCount,
-	      					      false );
-
-
-		  uint32_t metricsCount2 = mdMetricSet->GetParams()->MetricsCount;
-		  for( uint32_t i = 0; i < metricsCount2; i++ )
-		    {
-		      PrintValue( std::cout, results[ i ] );
-		      //		      if( m_IncludeMaxValues )
-			{
-			  PrintValue( std::cout, maxValues[ i ] );
-			}
-		    }
-
-		  //		  os << ",";
-
-		  for( uint32_t i = 0; i < mdMetricSet->GetParams()->InformationCount; i++ )
-		    {
-		      PrintValue( std::cout, results[ metricsCount + i ] );
-		    }
-
-	      // 	}
-	      // else
-	      // 	{
-	      // 	}
-
+                auto value = &reportValues[metricIndex];
+                switch (value->ValueType) {
+                case MetricsDiscovery::VALUE_TYPE_UINT32: printf("%u",   value->ValueUInt32); break;
+                case MetricsDiscovery::VALUE_TYPE_UINT64: printf("%llu", value->ValueUInt64); break;
+                case MetricsDiscovery::VALUE_TYPE_FLOAT:  printf("%f",   value->ValueFloat);  break;
+                }
 
                 printf("\n");
             }
